@@ -35,6 +35,11 @@ const envSchema = z.object({
   ANTHROPIC_MODEL: z.string().default('claude-sonnet-5-5'),
   ANTHROPIC_CHEAP_MODEL: z.string().default('claude-haiku-5-5'),
 
+  // Optional ultra-fast Groq provider (free API keys at https://console.groq.com)
+  GROQ_API_KEY: z.string().default(''),
+  GROQ_MODEL: z.string().default('llama-3.3-70b-versatile'),
+  GROQ_BASE_URL: z.string().default('https://api.groq.com/openai/v1'),
+
   // Optional free/alternative providers used when ANTHROPIC_API_KEY is empty.
   // Hugging Face Inference Providers require a token and available credits.
   HF_TOKEN: z.string().default(''),

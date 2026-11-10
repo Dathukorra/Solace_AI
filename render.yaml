@@ -1,0 +1,30 @@
+services:
+  # Backend Express Server on Render
+  - type: web
+    name: solace-ai-server
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: server
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm run start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: CORS_ORIGIN
+        value: "*"
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false

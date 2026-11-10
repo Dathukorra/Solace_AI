@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { env } from '../lib/env';
 import { logger } from '../lib/logger';
 
-export type AIProvider = 'anthropic' | 'huggingface' | 'pollinations' | 'none';
+export type AIProvider = 'anthropic' | 'groq' | 'huggingface' | 'pollinations' | 'none';
 
 let anthropicClient: Anthropic | null = null;
 let loggedProvider: AIProvider | null = null;
@@ -18,10 +18,11 @@ function getAnthropicClient(): Anthropic | null {
 
 /**
  * Chooses the active AI provider.
- * Priority: Anthropic -> Hugging Face -> Pollinations (keyless demo fallback).
+ * Priority: Anthropic -> Groq (ultra-fast) -> Hugging Face -> Pollinations (keyless demo fallback).
  */
 export function getAIProvider(): AIProvider {
   if (env.ANTHROPIC_API_KEY) return 'anthropic';
+  if (env.GROQ_API_KEY) return 'groq';
   if (env.HF_TOKEN) return 'huggingface';
   if (env.POLLINATIONS_ENABLED) return 'pollinations';
   return 'none';
@@ -75,11 +76,19 @@ function extractText(content: unknown): string {
   return '';
 }
 
-function getOpenAICompatibleConfig(provider: 'huggingface' | 'pollinations'): {
+function getOpenAICompatibleConfig(provider: 'groq' | 'huggingface' | 'pollinations'): {
   baseUrl: string;
   apiKey: string;
   model: string;
 } {
+  if (provider === 'groq') {
+    return {
+      baseUrl: env.GROQ_BASE_URL,
+      apiKey: env.GROQ_API_KEY,
+      model: env.GROQ_MODEL,
+    };
+  }
+
   if (provider === 'huggingface') {
     return {
       baseUrl: env.HF_BASE_URL,
@@ -97,7 +106,7 @@ function getOpenAICompatibleConfig(provider: 'huggingface' | 'pollinations'): {
 
 /**
  * Streams a reply from any OpenAI-compatible chat-completions endpoint.
- * Used for Hugging Face Inference Providers and the keyless Pollinations API.
+ * Used for Groq (ultra-fast LPU), Hugging Face, and Pollinations APIs.
  */
 async function streamOpenAICompatibleReply({
   provider,
@@ -105,7 +114,7 @@ async function streamOpenAICompatibleReply({
   messages,
   onToken,
 }: {
-  provider: 'huggingface' | 'pollinations';
+  provider: 'groq' | 'huggingface' | 'pollinations';
   systemPrompt: string;
   messages: ChatMessageParam[];
   onToken: (token: string) => void;
@@ -123,14 +132,14 @@ async function streamOpenAICompatibleReply({
     body: JSON.stringify({
       model,
       stream: true,
-      max_tokens: 1024,
+      max_tokens: 400,
       temperature: 0.7,
       // GPT-OSS spends most of its latency on hidden reasoning. Low effort keeps
       // chat responsive; this option is Pollinations-specific.
       ...(provider === 'pollinations' ? { reasoning_effort: 'low' } : {}),
       messages: [{ role: 'system', content: systemPrompt }, ...messages],
     }),
-    signal: AbortSignal.timeout(120_000),
+    signal: AbortSignal.timeout(60_000),
   });
 
   if (!response.ok) {
@@ -233,7 +242,7 @@ export async function streamClaudeReply({
     return streamFallbackReply(onToken);
   }
 
-  if (provider === 'huggingface' || provider === 'pollinations') {
+  if (provider === 'groq' || provider === 'huggingface' || provider === 'pollinations') {
     let partialText = '';
     const emit = (token: string) => {
       partialText += token;
