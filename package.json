@@ -1,0 +1,33 @@
+{
+  "name": "solace-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Solace AI Monorepo - Expo React Native App and Express TypeScript Server",
+  "workspaces": [
+    "app",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently -n \"SERVER,APP\" -c \"blue,magenta\" \"npm run dev:server\" \"npm run dev:app\"",
+    "dev:app": "npm run --workspace=app dev",
+    "dev:server": "npm run --workspace=server dev",
+    "build:server": "npm run --workspace=server build",
+    "start:server": "npm run --workspace=server start",
+    "prisma:generate": "npm run --workspace=server prisma:generate",
+    "prisma:migrate": "npm run --workspace=server prisma:migrate",
+    "prisma:push": "npm run --workspace=server prisma:push",
+    "prisma:seed": "npm run --workspace=server prisma:seed",
+    "prisma:studio": "npm run --workspace=server prisma:studio",
+    "lint": "npm run --workspace=app lint && npm run --workspace=server lint",
+    "lint:fix": "npm run --workspace=app lint:fix && npm run --workspace=server lint:fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "test:server": "npm run --workspace=server test",
+    "test:server:coverage": "npm run --workspace=server test:coverage"
+  },
+  "devDependencies": {
+    "ajv": "^8.20.0",
+    "concurrently": "^9.1.2",
+    "prettier": "^3.5.0"
+  }
+}

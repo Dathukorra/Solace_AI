@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+**/node_modules/
+.pnp
+.pnp.js
+
+# Expo
+app/.expo/
+app/.expo-shared/
+app/web-build/
+app/dist/
+.expo/
+dist/
+
+# Server build
+server/dist/
+server/build/
+dist/
+build/
+
+# Locally stored uploads (profile pictures)
+server/uploads/
+uploads/
+
+# Environment files
+.env
+.env*
+*.env
+server/.env*
+app/.env*
+!*.env.example
+!**/.env.example
+
+# SQLite / Database
+server/prisma/*.db
+server/prisma/*.db-journal
+*.db
+*.sqlite
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Editor & OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

@@ -1,0 +1,182 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  USER
+  ASSISTANT
+}
+
+enum ActivityType {
+  BREATHING
+  MEDITATION
+  JOURNALING
+  MOVEMENT
+  REFLECTION
+  BODY_SCAN
+}
+
+enum ReminderType {
+  MOOD
+  AFFIRMATION
+  BREATHING
+  SELFCARE
+  CUSTOM
+  MINDFULNESS
+  HYDRATION
+  GRATITUDE
+  CHECK_IN
+  WIND_DOWN
+  BREATHWORK
+}
+
+model User {
+  id              String         @id @default(uuid()) @db.Uuid
+  name            String
+  email           String         @unique
+  passwordHash    String
+  goals           String[]
+  timezone        String         @default("UTC")
+  aiMemoryEnabled Boolean        @default(true)
+  hasSeenTour     Boolean        @default(false)
+
+  // Personal profile details
+  age             Int?
+  gender          String?
+  dateOfBirth     DateTime?      @db.Date
+  phoneNumber     String?
+  location        String?
+  avatarUrl       String?        @db.Text
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  moodCheckins    MoodCheckin[]
+  conversations   Conversation[]
+  memories        UserMemory[]
+  activities      Activity[]
+  reminders       Reminder[]
+  pushTokens      PushToken[]
+  passwordResetTokens PasswordResetToken[]
+
+  @@map("users")
+}
+
+model MoodCheckin {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mood      Int      // 1-5 scale (1 sad, 3 neutral, 5 happy)
+  emotions  String[]
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("mood_checkins")
+}
+
+model Conversation {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  summary   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  messages  Message[]
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("conversations")
+}
+
+model Message {
+  id                String       @id @default(uuid()) @db.Uuid
+  conversationId    String       @db.Uuid
+  conversation      Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role              Role
+  content           String       @db.Text
+  suggestedActivity Json?
+  createdAt         DateTime     @default(now())
+
+  @@index([conversationId])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+model UserMemory {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fact      String   @db.Text
+  source    String   // e.g. "conversation", "user_stated", "journal"
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("user_memories")
+}
+
+model Activity {
+  id          String       @id @default(uuid()) @db.Uuid
+  userId      String       @db.Uuid
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        ActivityType
+  durationSec Int
+  completedAt DateTime     @default(now())
+  createdAt   DateTime     @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("activities")
+}
+
+model Reminder {
+  id        String       @id @default(uuid()) @db.Uuid
+  userId    String       @db.Uuid
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      ReminderType
+  title     String
+  time      String       // HH:mm format, e.g. "09:00"
+  days      Int[]        // Array of day numbers (0 = Sun, 1 = Mon, ..., 6 = Sat)
+  enabled   Boolean      @default(true)
+  createdAt DateTime     @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("reminders")
+}
+
+model PushToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  platform  String   // "ios" | "android" | "web"
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("push_tokens")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
