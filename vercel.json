@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "public": false,
   "cleanUrls": true,
   "framework": null,
   "buildCommand": "npm run --workspace=app build:web",
